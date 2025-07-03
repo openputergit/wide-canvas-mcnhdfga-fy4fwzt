@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Attendance Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .attendance-cell { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-4xl mx-auto p-4">
+        <header class="bg-cyan-500 text-white p-4 rounded-t-lg flex items-center justify-between mb-4">
+            <button onclick="goBack()" class="text-white"><i class="bi bi-arrow-left text-2xl"></i></button>
+            <h1 class="text-xl font-bold">Attendance Management</h1>
+            <div></div>
+        </header>
+
+        <div class="mb-4 flex gap-4">
+            <button onclick="showAddStudent()" class="bg-cyan-500 text-white px-4 py-2 rounded-lg">
+                <i class="bi bi-person-plus"></i> Add Student
+            </button>
+            <button onclick="showAddSubject()" class="bg-cyan-500 text-white px-4 py-2 rounded-lg">
+                <i class="bi bi-book"></i> Add Subject
+            </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-4 overflow-x-auto">
+            <div class="grid grid-cols-6 gap-2 mb-4">
+                <div class="font-bold">Date</div>
+                <div class="col-span-5 grid grid-cols-5 gap-2">
+                    <div class="font-bold">Math</div>
+                    <div class="font-bold">Physics</div>
+                    <div class="font-bold">Chemistry</div>
+                    <div class="font-bold">Biology</div>
+                    <div class="font-bold">English</div>
+                </div>
+            </div>
+            <div id="attendance-grid" class="space-y-2"></div>
+        </div>
+
+        <!-- Add Student Modal -->
+        <div id="studentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h2 class="text-xl font-bold mb-4">Add New Student</h2>
+                <input type="text" id="studentName" placeholder="Student Name" class="w-full p-2 mb-4 border rounded">
+                <input type="text" id="studentRoll" placeholder="Roll Number" class="w-full p-2 mb-4 border rounded">
+                <div class="flex justify-end gap-2">
+                    <button onclick="closeModal('studentModal')" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button onclick="addStudent()" class="bg-cyan-500 text-white px-4 py-2 rounded">Add</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Subject Modal -->
+        <div id="subjectModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-6 rounded-lg w-96">
+                <h2 class="text-xl font-bold mb-4">Add New Subject</h2>
+                <input type="text" id="subjectName" placeholder="Subject Name" class="w-full p-2 mb-4 border rounded">
+                <div class="flex justify-end gap-2">
+                    <button onclick="closeModal('subjectModal')" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button onclick="addSubject()" class="bg-cyan-500 text-white px-4 py-2 rounded">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let students = [];
+        let subjects = ['Math', 'Physics', 'Chemistry', 'Biology', 'English'];
+
+        function generateDates() {
+            const dates = [];
+            const currentDate = new Date();
+            for(let i = 0; i < 17; i++) {
+                const date = new Date(currentDate);
+                date.setDate(date.getDate() - i);
+                dates.push(date.toLocaleDateString('en-GB'));
+            }
+            return dates;
+        }
+
+        function generateAttendanceGrid() {
+            const grid = document.getElementById('attendance-grid');
+            const dates = generateDates();
+            
+            grid.innerHTML = dates.map(date => `
+                <div class="grid grid-cols-6 gap-2">
+                    <div class="bg-cyan-500 text-white p-2 rounded-lg">${date}</div>
+                    <div class="col-span-5 grid grid-cols-5 gap-2">
+                        ${Array(5).fill().map(() => `
+                            <button class="attendance-cell bg-yellow-300 text-black p-2 rounded-lg text-center" onclick="cycleAttendance(this)">N</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function cycleAttendance(element) {
+            const states = {
+                'N': { next: 'P', class: 'bg-green-400' },
+                'P': { next: 'A', class: 'bg-red-500' },
+                'A': { next: 'H', class: 'bg-gray-400' },
+                'H': { next: 'N', class: 'bg-yellow-300' }
+            };
+            
+            const current = element.textContent;
+            const next = states[current].next;
+            
+            element.textContent = next;
+            element.className = `attendance-cell ${states[next].class} text-black p-2 rounded-lg text-center`;
+        }
+
+        function showAddStudent() {
+            document.getElementById('studentModal').classList.remove('hidden');
+        }
+
+        function showAddSubject() {
+            document.getElementById('subjectModal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function addStudent() {
+            const name = document.getElementById('studentName').value;
+            const roll = document.getElementById('studentRoll').value;
+            if(name && roll) {
+                students.push({ name, roll });
+                closeModal('studentModal');
+                document.getElementById('studentName').value = '';
+                document.getElementById('studentRoll').value = '';
+            }
+        }
+
+        function addSubject() {
+            const subject = document.getElementById('subjectName').value;
+            if(subject) {
+                subjects.push(subject);
+                closeModal('subjectModal');
+                document.getElementById('subjectName').value = '';
+            }
+        }
+
+        function goBack() {
+            // Handle back navigation
+            console.log('Back button pressed');
+        }
+
+        // Initialize the attendance grid
+        generateAttendanceGrid();
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
